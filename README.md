@@ -39,8 +39,9 @@ ___
 > Filter operation is whether to apply *logical or* or *logical and*. By default it is *logical and*.
 
 #### API Exposed : 
-> `POST`  <HOST>:<PORT>/v1/operations/analytics
-> `BODY` - Example1
+> `POST`&nbsp;&nbsp;&nbsp;&nbsp; < HOST >:< PORT >/v1/operations/analytics
+
+> `BODY`&nbsp;&nbsp; - Example1
 ```JSON
 {
 	"filters": {
