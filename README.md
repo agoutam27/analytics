@@ -15,8 +15,11 @@
 ### Mongo indexing for better performance: 
 
 > For User collection
+
 `db.User.createIndex({"profile.key": 1, "profile.value": 1})`
+
 > For Questions Collection
+
 `db.Questions.createIndex({"userId": 1})`
 
 ### Steps to start the server
