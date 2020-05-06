@@ -8,7 +8,8 @@
     controllers: 'app/conrollers/**/*Controller.js'
     configuration files: 'config'
     lib: 'lib'
-    test: 'test'
+    test: 'test',
+    extras: 'extras' < 'Anything else related to development exercise - no impact on server' >
 ---
 > Methods in files of lib folder improvise responder and logging with modular implementation of server.
 ---
@@ -28,6 +29,8 @@
 
 ___
 ### Notes
+
+> This project is completely backend. There is no UI. Please use any of the HTTP clien of your choice. (i.e. Postman, Insomania) 
 
 > Currently implemented statistical methods are Mean, Median and Variance. Method parameter in body is a mandatory parameter with either a string value joined by comma or an array.
 

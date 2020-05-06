@@ -1,0 +1,358 @@
+
+
+db.User.aggregate([
+
+    {$match: { profile: { key: "Designation", value: "value 1" } }}
+]);
+
+db.User.aggregate([
+
+    {$match: { profile: { key: "Designation", value: "value 1" } }}
+]);
+
+
+db.User.aggregate([
+
+    {$match: { profile: {$elemMatch: {  } } }}
+]);
+
+
+db.User.aggregate([
+
+    {$match: { profile: {$elemMatch: { key: "Designation", value: {$in: ["value 1"]} } } }}
+]);
+
+db.User.aggregate([
+
+    {$match: { $and: [{'profile.key': 'Designation'}, {'profile.value': 'value 1'}] }}
+]);
+
+
+db.User.aggregate([
+
+    {$match: { $and: [{'profile.key': 'Designation'}, {'profile.value': {$in: ['value 1']}}] }}
+]);
+
+
+db.User.aggregate([
+
+    {$match: { $and: [{'profile.key': 'Designation'}, {'profile.value': {$in: ['value 1']}}, {'profile.key': 'Company'}, {'profile.value': {$in: ['value 1']}}] }}
+]);
+
+db.User.aggregate([
+
+    {$match: { $or: [{'profile.key': 'Designation'}, {'profile.value': {$in: ['value 1']}}, {'profile.key': 'Company'}, {'profile.value': {$in: ['value 1']}}] }}
+]);
+
+
+db.User.aggregate([
+
+    {$match: { $or: 
+        [{$and: [{'profile.key': 'Designation'}, {'profile.value': {$in: ['value 1']}}]}, {$and: [{'profile.key': 'Company'}, {'profile.value': {$in: ['value 1']}}]}] 
+    
+    }}
+]);
+
+db.User.aggregate([
+
+    {$match: { $and: 
+        [{$and: [{'profile.key': 'Designation'}, {'profile.value': {$in: ['value 1']}}]}, {$and: [{'profile.key': 'Company'}, {'profile.value': {$in: ['value 1']}}]}] 
+    
+    }},
+    {
+        '$lookup': {
+            'from': 'Questions',
+            'localField': '_id',
+            'foreignField': 'userId',
+            'as': 'Questions'
+        }
+    },
+    {$limit: 5}
+]).pretty();
+
+
+db.User.aggregate([
+
+    {$match: { $and: [
+        {profile: {$elemMatch: {key: "Company", value: {$in: ["value 1"]}}}},
+        {profile: {$elemMatch: {key: "Designation", value: {$in: ["value 1"]}}}}
+    ] }},
+    {
+        '$lookup': {
+            'from': 'Questions',
+            'localField': '_id',
+            'foreignField': 'userId',
+            'as': 'Questions'
+        }
+    },
+    //{$limit: 5},
+    {$project: {
+
+        _id: 0,
+        Questions: {
+            _id: 1,
+            rating: 1
+        }
+    }},
+    {$unwind: "$Questions"},
+    {
+        $group: {
+            _id: "$Questions._id",
+            ratings: {$push: "$Questions.rating"}
+        }
+    }
+
+]).pretty();
+
+db.Questions.aggregate([
+    {
+        $group: {
+            _id: "$userId",
+            ratings: { $push: {"$rating": {$sort: 1}}}
+        }
+    },
+    {
+        $sort: {
+            $size: "$ratings"
+        }
+    }
+]).pretty();
+
+
+
+db.User.aggregate([
+
+    {$match: {  _id: ObjectId("5e9bf269ef04992c1f63b31c") }},
+    {
+        '$lookup': {
+            'from': 'Questions',
+            'localField': '_id',
+            'foreignField': 'userId',
+            'as': 'Questions'
+        }
+    },
+    {$unwind: "$Questions"},
+    {
+        $group: {
+            _id: "$Questions._id",
+            ratings: {$push: "$Questions.rating"}
+            
+        }
+    },
+    {$project: {
+
+        _id: "$_id",
+        ratings: "$ratings",
+        length: {$size: "$ratings"}
+        
+    }},
+]).pretty();
+
+
+db.User.aggregate([
+
+    {$match: { $and: [
+        {profile: {$elemMatch: {key: "Company", value: {$in: ["value 1"]}}}},
+        {profile: {$elemMatch: {key: "Designation", value: {$in: ["value 1"]}}}}
+    ] }},
+    {
+        '$lookup': {
+            'from': 'Questions',
+            'localField': '_id',
+            'foreignField': 'userId',
+            'as': 'Questions'
+        }
+    },
+    {$unwind: "$Questions"},
+    {
+        $group: {
+            _id: "$Questions._id",
+            ratings: {$push: "$Questions.rating"}
+            
+        }
+    },
+    {$project: {
+
+        _id: "$_id",
+        ratings: "$ratings",
+        length: {$size: "$ratings"}
+        
+    }},
+    {$sort: {"length": -1}}
+]).pretty();
+
+
+
+
+db.User.createIndex({"profile.key": 1, "profile.value": 1});
+db.Questions.createIndex({"userId": 1});
+
+
+db.User.aggregate([
+    {
+        $match: { 
+            $and: [ 
+                {profile: {$elemMatch: {key: "Company", value: {$in: ["value 1"]}}}},
+                {profile: {$elemMatch: {key: "Designation", value: {$in: ["value 1"]}}}} 
+            ] 
+        }
+    },
+    {
+        '$lookup': {
+            'from': 'Questions',
+            'localField': '_id',
+            'foreignField': 'userId',
+            'as': 'Questions'
+        }
+    },
+    {$unwind: "$Questions"},
+    {$sort: {"Questions.rating": 1}},
+    {
+        $group: {
+            _id: "$_id",
+            ratings: {$push: "$Questions.rating"},
+            length: {$sum: 1}
+        }
+    },
+    {
+        $addFields: {
+            mean: {$avg: "$ratings"}
+        }
+    },
+    {
+        $addFields: {
+            median: {
+                $cond: {
+                    if: {$ne : [{ $mod: ["$length", 2]}, 0]},
+                    then: {$arrayElemAt: ["$ratings", {$divide: [{$add: ["$length", 1]}, 2]}]},
+                    else: {
+                        $divide: [
+                        {
+                            $sum: [
+                                {
+                                    $arrayElemAt: ["$ratings", {$divide: ["$length", 2]}]
+                                },
+                                {
+                                    $arrayElemAt: ["$ratings", {$subtract: [{$divide: ["$length", 2]}, 1]}]
+                                }
+                            ]
+                        },
+                        2
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    {
+        $addFields: {
+            variance: {
+                $cond: {
+                    if: { $gt: ["$length", 1]},
+                    then: {
+                        $sqrt: {
+                            $divide: [
+                                {$reduce: {
+                                    input: {
+                                        $map: {
+                                            input: "$ratings",
+                                            as: "rating",
+                                            in: {$pow: [{$subtract: ["$$rating", "$mean"]}, 2]}
+                                        }
+                                    },
+                                    initialValue: 0,
+                                    in: { $add: ["$$value", "$$this"]}
+                                }},
+                                {$subtract: ["$length", 1]}
+                            ]
+                        }
+                    },
+                    else: 0
+                }
+            }
+        }
+    },
+    {
+        $project: {
+            
+            ratings: 1,
+            length: 1,
+            mean: 1,
+            variance: 1,
+            median: 1
+        }
+    }
+]).pretty();
+
+
+
+
+db.User.aggregate([
+    {
+        $match: { 
+            $and: [ 
+                {profile: {$elemMatch: {key: "Company", value: {$in: ["value 1"]}}}},
+                {profile: {$elemMatch: {key: "Designation", value: {$in: ["value 1"]}}}} 
+            ] 
+        }
+    },
+    {
+        '$lookup': {
+            'from': 'Questions',
+            'localField': '_id',
+            'foreignField': 'userId',
+            'as': 'Questions'
+        }
+    },
+    {$unwind: "$Questions"},
+    {$sort: {"Questions.rating": 1}},
+    {
+        $group: {
+            _id: "$userId",
+            ratings: {$push: "$Questions.rating"},
+            length: {$sum: 1}
+        }
+    },
+    {
+        $addFields: {
+            mean: {$avg: "$ratings"}
+        }
+    },
+    {
+        $addFields: {
+            variance: {
+                $cond: {
+                    if: { $gt: ["$length", 1]},
+                    then: {
+                        $sqrt: {
+                            $divide: [
+                                {$reduce: {
+                                    input: {
+                                        $map: {
+                                            input: "$ratings",
+                                            as: "rating",
+                                            in: {$pow: [{$subtract: ["$$rating", "$mean"]}, 2]}
+                                        }
+                                    },
+                                    initialValue: 0,
+                                    in: { $add: ["$$value", "$$this"]}
+                                }},
+                                {$subtract: ["$length", 1]}
+                            ]
+                        }
+                    },
+                    else: 0
+                }
+            }
+        }
+    },
+    {
+        $project: {
+            
+            ratings: 1,
+            length: 1,
+            mean: 1,
+            variance: 1
+        }
+    }
+]).pretty();
